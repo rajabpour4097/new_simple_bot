@@ -316,20 +316,21 @@ def main():
                         if swing_type == 'bullish' and cache_data.index[-1]['close'] > legs[1]['start'].high:
                             state.reset()
                             state.fib_levels = fibonacci_retracement(start_price=legs[2]['end'].high, end_price=legs[2]['start'].low)
-                            last_swing = swing_type
+                            last_swing_type = swing_type
                             log(f"📈 New fibonacci created: fib1:{state.fib_levels['1.0']} time:{legs[2]['start'].time} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']} time:{legs[2]['end'].time}", color='green')
 
                         elif swing_type == 'bearish' and cache_data.index[-1]['close'] < legs[1]['start'].low:
                             state.reset()
                             state.fib_levels = fibonacci_retracement(start_price=legs[2]['end'].low, end_price=legs[2]['start'].high)
-                            last_swing = swing_type
+                            last_swing_type = swing_type
                             log(f"📉 New fibonacci created: fib1:{state.fib_levels['1.0']} time:{legs[2]['start'].time} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']} time:{legs[2]['end'].time}", color='green')
 
                     # Phase 2
                     if state.fib_levels:
-                        if last_swing == 'bullish':
+                        if last_swing_type == 'bullish':
                             if cache_data.index[-1]['high'] > state.fib_levels['0.0']:
                                 state.fib_levels = fibonacci_retracement(start_price=cache_data.index[-1]['high'], end_price=state.fib_levels['1.0'])
+                                # Should it be reset???
                                 log(f"📈 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
                             elif cache_data.index[-1]['low'] < state.fib_levels['1.0']:
                                 state.reset()
@@ -342,9 +343,10 @@ def main():
                                     state.second_touch = cache_data.index[-1]
                                     log(f"📈 Second touch on bullish: {state.second_touch['time']}", color='green')
 
-                        elif last_swing == 'bearish':
+                        elif last_swing_type == 'bearish':
                             if cache_data.index[-1]['low'] < state.fib_levels['0.0']:
                                 state.fib_levels = fibonacci_retracement(start_price=cache_data.index[-1]['low'], end_price=state.fib_levels['1.0'])
+                                # Should it be reset???
                                 log(f"📉 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
                             elif cache_data.index[-1]['high'] > state.fib_levels['1.0']:
                                 state.reset()
@@ -361,10 +363,43 @@ def main():
                         pass
 
                 if len(legs) < 3:
+                    if state.fib_levels:
+                        if last_swing_type == 'bullish':
+                            if cache_data.index[-1]['high'] > state.fib_levels['0.0']:
+                                state.fib_levels = fibonacci_retracement(start_price=cache_data.index[-1]['high'], end_price=state.fib_levels['1.0'])
+                                # Should it be reset???
+                                log(f"📈 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
+                            elif cache_data.index[-1]['low'] < state.fib_levels['1.0']:
+                                state.reset()
+                                log(f"📈 Price dropped below fib1 on bullish and reset fib levels", color='red')
+                            elif cache_data.index[-1]['low'] <= state.fib_levels['0.705']:
+                                if not state.first_touch:
+                                    state.first_touch = cache_data.index[-1]
+                                    log(f"📈 First touch on bullish: {state.first_touch['time']}", color='green')
+                                elif state.first_touch and cache_data.index[-1]['status'] != state.first_touch['status']:
+                                    state.second_touch = cache_data.index[-1]
+                                    log(f"📈 Second touch on bullish: {state.second_touch['time']}", color='green')
+
+                        elif last_swing_type == 'bearish':
+                            if cache_data.index[-1]['low'] < state.fib_levels['0.0']:
+                                state.fib_levels = fibonacci_retracement(start_price=cache_data.index[-1]['low'], end_price=state.fib_levels['1.0'])
+                                # Should it be reset???
+                                log(f"📉 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
+                            elif cache_data.index[-1]['high'] > state.fib_levels['1.0']:
+                                state.reset()
+                                log(f"📉 Price dropped below fib1 on bearish and reset fib levels", color='red')
+                            elif cache_data.index[-1]['high'] >= state.fib_levels['0.705']:
+                                if not state.first_touch:
+                                    state.first_touch = cache_data.index[-1]
+                                    log(f"📉 First touch on bearish: {state.first_touch['time']}", color='red')
+                                elif state.first_touch and cache_data.index[-1]['status'] != state.first_touch['status']:
+                                    state.second_touch = cache_data.index[-1]
+                                    log(f"📉 Second touch on bearish: {state.second_touch['time']}", color='red')
+
                     if len(legs) == 2:
                         log(f'legs = 2', color='blue')
                         log(f'leg0: {legs[0]["start"]}, {legs[0]["end"]}, leg1: {legs[1]["start"]}, {legs[1]["end"]}', color='lightcyan_ex')
-                    if len(legs) == 1:
+                    elif len(legs) == 1:
                         log(f'legs = 1', color='blue')
                         log(f'leg0: {legs[0]["start"]}, {legs[0]["end"]}', color='lightcyan_ex')
                 
@@ -451,7 +486,7 @@ def main():
                         tick=last_tick,
                         sl=stop,
                         tp=reward_end,
-                        comment=f"Bullish Swing {swing_type}",
+                        comment=f"Bullish Swing {last_swing_type}",
                         risk_pct=0.01  # مثلا 1% ریسک
                     )
                     # ارسال ایمیل غیرمسدودکننده
@@ -564,7 +599,7 @@ def main():
                         tick=last_tick,
                         sl=stop,
                         tp=reward_end,
-                        comment=f"Bearish Swing {swing_type}",
+                        comment=f"Bearish Swing {last_swing_type}",
                         risk_pct=0.01  # مثلا 1% ریسک
                     )
                     
