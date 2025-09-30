@@ -326,16 +326,16 @@ def main():
                         if swing_type == 'bullish' and cache_data.iloc[-1]['close'] > legs[1]['start_value']:
                             state.reset()
                             state.fib_levels = fibonacci_retracement(start_price=legs[2]['end_value'], end_price=legs[2]['start_value'])
-                            state.fib0_time = legs[2]['start'].name
-                            state.fib1_time = legs[2]['end'].name
+                            state.fib0_time = [legs[2]['start']].name
+                            state.fib1_time = [legs[2]['end']].name
                             last_swing_type = swing_type
                             log(f"📈 New fibonacci created: fib1:{state.fib_levels['1.0']} time:{legs[2]['start']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']} time:{legs[2]['end']}", color='green')
 
                         elif swing_type == 'bearish' and cache_data.iloc[-1]['close'] < legs[1]['start_value']:
                             state.reset()
                             state.fib_levels = fibonacci_retracement(start_price=legs[2]['end_value'], end_price=legs[2]['start_value'])
-                            state.fib0_time = legs[2]['start'].name
-                            state.fib1_time = legs[2]['end'].name
+                            state.fib0_time = [legs[2]['start']].name
+                            state.fib1_time = [legs[2]['end']].name
                             last_swing_type = swing_type
                             log(f"📉 New fibonacci created: fib1:{state.fib_levels['1.0']} time:{legs[2]['start']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']} time:{legs[2]['end']}", color='green')
 
