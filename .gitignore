@@ -1,5 +1,7 @@
 venv/
 env/
+.venv/
+.vscode/
 
 *.csv
 
@@ -11,3 +13,5 @@ __pycache__/
 swing_logs_*.txt
 
 email_config.py
+test_fibo.py
+mock_test_usdjpy_sep29.py
