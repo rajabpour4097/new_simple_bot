@@ -314,9 +314,6 @@ def main():
                     # log(f'legs[1][start]end_value: {legs[1]['end_value']}', color='green')
                     # log(f'legs[1] TEST: {legs[1]}', color='green')
                     # log(f'Test: cache_data.index[-1][close]: {cache_data.iloc[-1]['close']}', color='green')
-                    # state.first_touch = cache_data.iloc[-1]
-                    # log(f'Test: state.first_touch: {state.first_touch['timestamp']}', color='green')
-                    # print(cache_data.iloc[-1]['status'], state.first_touch['status'])
 
 
                     # Phase 1 Initialization fib_levels or change by new fib
@@ -353,11 +350,13 @@ def main():
                                 log(f"📈 Price dropped below fib1 on bullish and reset fib levels", color='red')
                             elif cache_data.iloc[-1]['low'] <= state.fib_levels['0.705']:
                                 if not state.first_touch:
-                                    state.first_touch = cache_data.iloc[-1]
-                                    log(f"📈 First touch on bullish: {state.first_touch['timestamp']}", color='green')
-                                elif state.first_touch and cache_data.iloc[-1]['status'] != state.first_touch['status']:
-                                    state.second_touch = cache_data.iloc[-1]
-                                    log(f"📈 Second touch on bullish: {state.second_touch['timestamp']}", color='green')
+                                    state.first_touch_value = cache_data.iloc[-1]
+                                    state.first_touch = True
+                                    log(f"📈 First touch on bullish: {state.first_touch_value['timestamp']}", color='green')
+                                elif state.first_touch and cache_data.iloc[-1]['status'] != state.first_touch_value['status']:
+                                    state.second_touch_value = cache_data.iloc[-1]
+                                    state.second_touch = True
+                                    log(f"📈 Second touch on bullish: {state.second_touch_value['timestamp']}", color='green')
 
                         elif last_swing_type == 'bearish':
                             if cache_data.iloc[-1]['low'] < state.fib_levels['0.0']:
@@ -370,11 +369,13 @@ def main():
                                 log(f"📉 Price dropped below fib1 on bearish and reset fib levels", color='red')
                             elif cache_data.iloc[-1]['high'] >= state.fib_levels['0.705']:
                                 if not state.first_touch:
-                                    state.first_touch = cache_data.iloc[-1]
-                                    log(f"📉 First touch on bearish: {state.first_touch['timestamp']}", color='red')
-                                elif state.first_touch and cache_data.iloc[-1]['status'] != state.first_touch['status']:
-                                    state.second_touch = cache_data.iloc[-1]
-                                    log(f"📉 Second touch on bearish: {state.second_touch['timestamp']}", color='red')
+                                    state.first_touch_value = cache_data.iloc[-1]
+                                    state.first_touch = True
+                                    log(f"📉 First touch on bearish: {state.first_touch_value['timestamp']}", color='red')
+                                elif state.first_touch and cache_data.iloc[-1]['status'] != state.first_touch_value['status']:
+                                    state.second_touch_value = cache_data.iloc[-1]
+                                    state.second_touch = True
+                                    log(f"📉 Second touch on bearish: {state.second_touch_value['timestamp']}", color='red')
 
                     elif not is_swing and not state.fib_levels:
                         pass
