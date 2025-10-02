@@ -299,7 +299,8 @@ def main():
                 log(f' ' * 80)
                 i += 1
                 
-                legs = get_legs(cache_data.iloc[start_index:])
+                legs_data = cache_data.iloc[:-1]
+                legs = get_legs(legs_data[start_index:])
                 log(f'First len legs: {len(legs)}', color='green')
                 log(f' ' * 80)
 
