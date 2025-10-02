@@ -44,7 +44,7 @@ FULL_TIME_IRAN = {
 
 # تنظیمات MT5
 MT5_CONFIG = {
-    'symbol': 'USDJPY',
+    'symbol': 'EURUSD',
     'lot_size': 0.01,
     'win_ratio': 1.2,
     'magic_number': 234000,
@@ -57,7 +57,7 @@ MT5_CONFIG = {
 
 # تنظیمات استراتژی
 TRADING_CONFIG = {
-    'threshold': 600,  # Changed from 6 to 60 to detect major legs (6 pips minimum)
+    'threshold': 6,  # Changed from 6 to 60 to detect major legs (6 pips minimum)
     'fib_705': 0.705,
     'fib_90': 0.9,
     'window_size': 100,

@@ -253,7 +253,7 @@ def main():
                 continue
             
             # دریافت داده از MT5
-            cache_data = mt5_conn.get_historical_data(count=window_size)
+            cache_data = mt5_conn.get_historical_data(count=window_size * 2)
             
             if cache_data is None:
                 log("❌ Failed to get data from MT5", color='red')
@@ -299,8 +299,7 @@ def main():
                 log(f' ' * 80)
                 i += 1
                 
-                legs_data = cache_data.iloc[:-1]
-                legs = get_legs(legs_data[start_index:])
+                legs = get_legs(cache_data.iloc[start_index:-1])
                 log(f'First len legs: {len(legs)}', color='green')
                 log(f' ' * 80)
 
