@@ -345,6 +345,8 @@ def main():
                             if cache_data.iloc[-2]['high'] > state.fib_levels['0.0']:
                                 state.fib_levels = fibonacci_retracement(start_price=cache_data.iloc[-2]['high'], end_price=state.fib_levels['1.0'])
                                 state.fib0_time = cache_data.iloc[-2]['timestamp']
+                                state.first_touch = False
+                                state.first_touch_value = None
                                 # Should it be reset???
                                 log(f"📈 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
                             elif cache_data.iloc[-2]['low'] < state.fib_levels['1.0']:
@@ -365,6 +367,8 @@ def main():
                             if cache_data.iloc[-2]['low'] < state.fib_levels['0.0']:
                                 state.fib_levels = fibonacci_retracement(start_price=cache_data.iloc[-2]['low'], end_price=state.fib_levels['1.0'])
                                 state.fib0_time = cache_data.iloc[-2]['timestamp']
+                                state.first_touch = False
+                                state.first_touch_value = None
                                 # Should it be reset???
                                 log(f"📉 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
                             elif cache_data.iloc[-2]['high'] > state.fib_levels['1.0']:
@@ -392,6 +396,8 @@ def main():
                             if cache_data.iloc[-2]['high'] > state.fib_levels['0.0']:
                                 state.fib_levels = fibonacci_retracement(start_price=cache_data.iloc[-2]['high'], end_price=state.fib_levels['1.0'])
                                 state.fib0_time = cache_data.iloc[-2]['timestamp']
+                                state.first_touch = False
+                                state.first_touch_value = None
                                 # Should it be reset???
                                 log(f"📈 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
                             elif cache_data.iloc[-2]['low'] < state.fib_levels['1.0']:
@@ -412,6 +418,8 @@ def main():
                             if cache_data.iloc[-2]['low'] < state.fib_levels['0.0']:
                                 state.fib_levels = fibonacci_retracement(start_price=cache_data.iloc[-2]['low'], end_price=state.fib_levels['1.0'])
                                 state.fib0_time = cache_data.iloc[-2]['timestamp']
+                                state.first_touch = False
+                                state.first_touch_value = None
                                 # Should it be reset???
                                 log(f"📉 Updated fibonacci: fib1:{state.fib_levels['1.0']} - fib0.705:{state.fib_levels['0.705']} - fib0:{state.fib_levels['0.0']}", color='green')
                             elif cache_data.iloc[-2]['high'] > state.fib_levels['1.0']:
