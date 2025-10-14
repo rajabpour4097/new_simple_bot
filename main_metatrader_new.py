@@ -112,7 +112,7 @@ def main():
             'risk': risk,
             'direction': 'buy' if pos.type == mt5.POSITION_TYPE_BUY else 'sell',
             'done_stages': set(),
-            'base_tp_R': DYNAMIC_RISK_CONFIG.get('base_tp_R', 1.2),
+            'base_tp_R': DYNAMIC_RISK_CONFIG.get('base_tp_R', 2),
             'commission_locked': False
         }
         # رویداد ثبت پوزیشن
@@ -457,7 +457,7 @@ def main():
                             direction="buy",
                             rr=win_ratio,
                             entry=buy_entry_price,
-                            sl=float(state.fib_levels['1.0'] if abs(state.fib_levels['0.9']-buy_entry_price) <= _pip_size_for(MT5_CONFIG['symbol'])*2 else state.fib_levels['0.9']),
+                            sl=float(state.fib_levels['1.0']),
                             tp=None,
                             fib=state.fib_levels,
                             confidence=None,
@@ -486,19 +486,19 @@ def main():
                     two_pips = 2.0 * pip_size
                     min_dist = _min_stop_distance(MT5_CONFIG['symbol'])
 
-                    # معیار درستِ 2 پیپ
-                    is_close_to_09 = abs(state.fib_levels['0.9'] - buy_entry_price) <= two_pips
-
-                    candidate_sl = state.fib_levels['1.0'] if is_close_to_09 else state.fib_levels['0.9']
+                    # همیشه از fib 1.0 استفاده می‌کنیم
+                    candidate_sl = state.fib_levels['1.0']
 
                     min_pip_dist = 2  # حداقل 2 پیپ واقعی
                     pip_size = _pip_size_for(MT5_CONFIG['symbol'])
                     min_abs_dist = max(min_pip_dist * pip_size, min_dist)
 
-                    # گارد جهت
+                    # گارد جهت - fib 1.0 همیشه باید زیر entry باشد
                     if candidate_sl >= buy_entry_price:
-                        # برگرداندن به 1.0 اگر 0.9 بالاتر بود
-                        candidate_sl = float(state.fib_levels['1.0'])
+                        log("🚫 Skip BUY: fib 1.0 is above entry price", color='red')
+                        state.reset()
+                        reset_state_and_window()
+                        continue
                     # اطمینان از فاصله
                     if (buy_entry_price - candidate_sl) < min_abs_dist:
                         # اگر فاصله خیلی کم است، یا SL را جابه‌جا کن یا معامله را لغو کن
@@ -584,7 +584,7 @@ def main():
                             direction="sell",
                             rr=win_ratio,
                             entry=sell_entry_price,
-                            sl=float(state.fib_levels['1.0'] if abs(state.fib_levels['0.9']-sell_entry_price) <= _pip_size_for(MT5_CONFIG['symbol'])*2 else state.fib_levels['0.9']),
+                            sl=float(state.fib_levels['1.0']),
                             tp=None,
                             fib=state.fib_levels,
                             confidence=None,
@@ -611,15 +611,19 @@ def main():
                     two_pips = 2.0 * pip_size
                     min_dist = _min_stop_distance(MT5_CONFIG['symbol'])
 
-                    is_close_to_09 = abs(state.fib_levels['0.9'] - sell_entry_price) <= two_pips
-                    candidate_sl = state.fib_levels['1.0'] if is_close_to_09 else state.fib_levels['0.9']
+                    # همیشه از fib 1.0 استفاده می‌کنیم
+                    candidate_sl = state.fib_levels['1.0']
 
                     min_pip_dist = 2.0
                     pip_size = _pip_size_for(MT5_CONFIG['symbol'])
                     min_abs_dist = max(min_pip_dist * pip_size, min_dist)
 
+                    # گارد جهت - fib 1.0 همیشه باید بالای entry باشد
                     if candidate_sl <= sell_entry_price:
-                        candidate_sl = float(state.fib_levels['1.0'])
+                        log("🚫 Skip SELL: fib 1.0 is below entry price", color='red')
+                        state.reset()
+                        reset_state_and_window()
+                        continue
                     if (candidate_sl - sell_entry_price) < min_abs_dist:
                         adj = sell_entry_price + min_abs_dist
                         candidate_sl = float(adj)
