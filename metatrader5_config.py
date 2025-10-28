@@ -71,6 +71,8 @@ TRADING_CONFIG = {
     'lookback_period': 20,
     # Optional: epsilon tolerance for 0.705 touch detection (in pips)
     # 'touch_epsilon_pips': 0.15,
+    'prevent_multiple_positions': True,  # جلوگیری از باز کردن پوزیشن‌های متعدد همزمان
+    'position_check_mode': 'all',  # 'all': همه پوزیشن‌ها، 'conflicting': فقط پوزیشن‌های مخالف
 }
 
 # مدیریت پویا چند مرحله‌ای جدید - 19 مرحله (2R تا 20R)
