@@ -45,6 +45,13 @@ def main():
     print(f"📊 Config: Symbol={MT5_CONFIG['symbol']}, Lot={MT5_CONFIG['lot_size']}, Win Ratio={win_ratio}")
     print(f"⏰ Trading Hours (Iran): {MT5_CONFIG['trading_hours']['start']} - {MT5_CONFIG['trading_hours']['end']}")
     print(f"🇮🇷 Current Iran Time: {mt5_conn.get_iran_time().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # نمایش تنظیمات مدیریت پوزیشن
+    prevent_multiple = TRADING_CONFIG.get('prevent_multiple_positions', True)
+    check_mode = TRADING_CONFIG.get('position_check_mode', 'all')
+    print(f"🔒 Position Management: Multiple positions prevention = {prevent_multiple}")
+    if prevent_multiple:
+        print(f"🔍 Check Mode: {check_mode} ({'All positions' if check_mode == 'all' else 'Only conflicting positions'})")
 
     # در ابتدای main loop بعد از initialize
     print("🔍 Checking symbol properties...")
@@ -101,6 +108,49 @@ def main():
 
     def _round(p):
         return float(f"{p:.{_digits()}f}")
+
+    def has_open_positions():
+        """بررسی وجود پوزیشن‌های باز"""
+        positions = mt5_conn.get_positions()
+        return positions is not None and len(positions) > 0
+
+    def has_conflicting_positions(intended_direction):
+        """بررسی وجود پوزیشن‌های مخالف با جهت مورد نظر
+        intended_direction: 'buy' یا 'sell'
+        """
+        positions = mt5_conn.get_positions()
+        if not positions:
+            return False
+        
+        for pos in positions:
+            if intended_direction == 'buy' and pos.type == mt5.POSITION_TYPE_SELL:
+                return True
+            elif intended_direction == 'sell' and pos.type == mt5.POSITION_TYPE_BUY:
+                return True
+        return False
+
+    def log_open_positions():
+        """نمایش جزئیات پوزیشن‌های باز"""
+        positions = mt5_conn.get_positions()
+        if not positions:
+            return
+        log(f"📊 Open positions count: {len(positions)}", color='cyan')
+        for pos in positions:
+            pos_type = "BUY" if pos.type == mt5.POSITION_TYPE_BUY else "SELL"
+            log(f"   Ticket={pos.ticket} | Type={pos_type} | Volume={pos.volume} | Entry={pos.price_open} | Profit={pos.profit:.2f}", color='cyan')
+
+    def get_positions_summary():
+        """دریافت خلاصه‌ای از پوزیشن‌های باز برای ایمیل"""
+        positions = mt5_conn.get_positions()
+        if not positions:
+            return "No open positions"
+        
+        summary = []
+        for pos in positions:
+            pos_type = "BUY" if pos.type == mt5.POSITION_TYPE_BUY else "SELL"
+            summary.append(f"   - Ticket: {pos.ticket} | Type: {pos_type} | Volume: {pos.volume} | Entry: {pos.price_open} | Profit: {pos.profit:.2f}")
+        
+        return f"{len(positions)} open position(s):\n" + "\n".join(summary)
 
     def register_position(pos):
         # محاسبه R (ریسک اولیه)
@@ -445,6 +495,55 @@ def main():
                 
                 # بخش معاملات - buy statement (مطابق منطق main_saver_copy2.py)
                 if last_swing_type == 'bullish' and state.second_touch:
+                    # بررسی پوزیشن‌های باز قبل از ایجاد سیگنال جدید (اگر فعال باشد)
+                    if TRADING_CONFIG.get('prevent_multiple_positions', True):
+                        check_mode = TRADING_CONFIG.get('position_check_mode', 'all')
+                        should_skip = False
+                        skip_reason = ""
+                        
+                        if check_mode == 'all' and has_open_positions():
+                            log(f"🚫 Skip BUY signal: Position(s) already open (mode: all positions)", color='yellow')
+                            should_skip = True
+                            skip_reason = f"Position(s) already open (mode: {check_mode})"
+                        elif check_mode == 'conflicting' and has_conflicting_positions('buy'):
+                            log(f"🚫 Skip BUY signal: Conflicting SELL position(s) detected", color='yellow')
+                            should_skip = True
+                            skip_reason = "Conflicting SELL position(s) detected"
+                        
+                        if should_skip:
+                            log_open_positions()
+                            
+                            # ارسال ایمیل اطلاع‌رسانی skip شدن سیگنال BUY
+                            try:
+                                positions_summary = get_positions_summary()
+                                send_trade_email_async(
+                                    subject=f"SIGNAL SKIPPED - BUY {MT5_CONFIG['symbol']}",
+                                    body=(
+                                        f"🚫 TRADING SIGNAL SKIPPED 🚫\n\n"
+                                        f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                                        f"Symbol: {MT5_CONFIG['symbol']}\n"
+                                        f"Signal Type: BUY (Bullish Swing)\n"
+                                        f"Action: SKIPPED\n"
+                                        f"Reason: {skip_reason}\n"
+                                        f"Check Mode: {check_mode}\n\n"
+                                        f"📊 Signal Details:\n"
+                                        f"Entry Price Would Be: {buy_entry_price:.5f}\n"
+                                        f"Stop Loss Would Be: {state.fib_levels.get('1.0', 'N/A'):.5f}\n\n"
+                                        f"📈 Fibonacci Levels:\n"
+                                        f"   fib 0.0 (resistance): {state.fib_levels.get('0.0', 'N/A'):.5f}\n"
+                                        f"   fib 0.705 (entry zone): {state.fib_levels.get('0.705', 'N/A'):.5f}\n"
+                                        f"   fib 1.0 (support/SL): {state.fib_levels.get('1.0', 'N/A'):.5f}\n\n"
+                                        f"🔒 Current Open Positions:\n{positions_summary}\n"
+                                    )
+                                )
+                                log(f"📧 Skip signal email sent for BUY signal", color='cyan')
+                            except Exception as _e:
+                                log(f'Skip signal email failed: {_e}', color='red')
+                            
+                            state.reset()
+                            reset_state_and_window()
+                            continue
+                    
                     log(f"📈 Buy signal triggered", color='green')
                     last_tick = mt5.symbol_info_tick(MT5_CONFIG['symbol'])
                     buy_entry_price = last_tick.ask
@@ -573,6 +672,55 @@ def main():
 
                 # بخش معاملات - sell statement (مطابق منطق main_saver_copy2.py)
                 if last_swing_type == 'bearish' and state.second_touch:
+                    # بررسی پوزیشن‌های باز قبل از ایجاد سیگنال جدید (اگر فعال باشد)
+                    if TRADING_CONFIG.get('prevent_multiple_positions', True):
+                        check_mode = TRADING_CONFIG.get('position_check_mode', 'all')
+                        should_skip = False
+                        skip_reason = ""
+                        
+                        if check_mode == 'all' and has_open_positions():
+                            log(f"🚫 Skip SELL signal: Position(s) already open (mode: all positions)", color='yellow')
+                            should_skip = True
+                            skip_reason = f"Position(s) already open (mode: {check_mode})"
+                        elif check_mode == 'conflicting' and has_conflicting_positions('sell'):
+                            log(f"🚫 Skip SELL signal: Conflicting BUY position(s) detected", color='yellow')
+                            should_skip = True
+                            skip_reason = "Conflicting BUY position(s) detected"
+                        
+                        if should_skip:
+                            log_open_positions()
+                            
+                            # ارسال ایمیل اطلاع‌رسانی skip شدن سیگنال SELL
+                            try:
+                                positions_summary = get_positions_summary()
+                                send_trade_email_async(
+                                    subject=f"SIGNAL SKIPPED - SELL {MT5_CONFIG['symbol']}",
+                                    body=(
+                                        f"🚫 TRADING SIGNAL SKIPPED 🚫\n\n"
+                                        f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                                        f"Symbol: {MT5_CONFIG['symbol']}\n"
+                                        f"Signal Type: SELL (Bearish Swing)\n"
+                                        f"Action: SKIPPED\n"
+                                        f"Reason: {skip_reason}\n"
+                                        f"Check Mode: {check_mode}\n\n"
+                                        f"📊 Signal Details:\n"
+                                        f"Entry Price Would Be: {sell_entry_price:.5f}\n"
+                                        f"Stop Loss Would Be: {state.fib_levels.get('1.0', 'N/A'):.5f}\n\n"
+                                        f"📉 Fibonacci Levels:\n"
+                                        f"   fib 0.0 (support): {state.fib_levels.get('0.0', 'N/A'):.5f}\n"
+                                        f"   fib 0.705 (entry zone): {state.fib_levels.get('0.705', 'N/A'):.5f}\n"
+                                        f"   fib 1.0 (resistance/SL): {state.fib_levels.get('1.0', 'N/A'):.5f}\n\n"
+                                        f"🔒 Current Open Positions:\n{positions_summary}\n"
+                                    )
+                                )
+                                log(f"📧 Skip signal email sent for SELL signal", color='cyan')
+                            except Exception as _e:
+                                log(f'Skip signal email failed: {_e}', color='red')
+                            
+                            state.reset()
+                            reset_state_and_window()
+                            continue
+                    
                     log(f"📉 Sell signal triggered", color='red')
                     last_tick = mt5.symbol_info_tick(MT5_CONFIG['symbol'])
                     sell_entry_price = last_tick.bid
@@ -704,8 +852,13 @@ def main():
             positions = mt5_conn.get_positions()
             if positions is None or len(positions) == 0:
                 if position_open:
-                    log("🏁 Position closed", color='yellow')
+                    log("🏁 All positions closed", color='yellow')
                     position_open = False
+            else:
+                if not position_open:
+                    log("🔓 Position(s) detected as open", color='cyan')
+                    log_open_positions()
+                    position_open = True
 
             manage_open_positions()
 
