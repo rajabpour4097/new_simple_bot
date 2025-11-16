@@ -47,6 +47,11 @@ MY_CUSTOM_TIME_IRAN = {
     'end': '23:59'
 }
 
+BEST_TIME_IRAN = {
+    'start': '09:00',
+    'end': '18:30'
+}
+
 # تنظیمات MT5
 MT5_CONFIG = {
     'symbol': 'EURUSD',
@@ -57,7 +62,7 @@ MT5_CONFIG = {
     'max_spread': 3.0,
     'min_balance': 1,
     'max_daily_trades': 10,
-    'trading_hours': MY_CUSTOM_TIME_IRAN,
+    'trading_hours': BEST_TIME_IRAN,
 }
 
 # تنظیمات استراتژی
