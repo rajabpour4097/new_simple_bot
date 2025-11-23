@@ -62,7 +62,8 @@ MT5_CONFIG = {
     'max_spread': 3.0,
     'min_balance': 1,
     'max_daily_trades': 10,
-    'trading_hours': BEST_TIME_IRAN,
+    'trading_hours': IRAN_ACTIVE_HOURS,
+    'risk_percent': 0.02,  # 2% ریسک در هر معامله
 }
 
 # تنظیمات استراتژی

@@ -422,7 +422,7 @@ class MT5Connector:
                 tick_value = contract * tick_size
         return tick_size, tick_value
 
-    def calculate_volume_by_risk(self, entry: float, sl: float, tick, risk_pct: float = 0.01) -> float:
+    def calculate_volume_by_risk(self, entry: float, sl: float, tick, risk_pct: float = 0.02) -> float:
         """Position sizing with price risk + current spread (commission removed)."""
         acc = mt5.account_info()
         info = mt5.symbol_info(self.symbol)

@@ -627,7 +627,7 @@ def main():
                         sl=stop,
                         tp=reward_end,
                         comment=f"Bullish Swing {last_swing_type}",
-                        risk_pct=0.01  # مثلا 1% ریسک
+                        risk_pct=MT5_CONFIG['risk_percent']
                     )
                     # ارسال ایمیل غیرمسدودکننده
                     try:
@@ -794,7 +794,7 @@ def main():
                         sl=stop,
                         tp=reward_end,
                         comment=f"Bearish Swing {last_swing_type}",
-                        risk_pct=0.01  # مثلا 1% ریسک
+                        risk_pct=MT5_CONFIG['risk_percent']
                     )
                     
                     # ارسال ایمیل غیرمسدودکننده
