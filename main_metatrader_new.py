@@ -303,7 +303,7 @@ def main():
                 continue
             
             # دریافت داده از MT5
-            cache_data = mt5_conn.get_historical_data(count=window_size * 2)
+            cache_data = mt5_conn.get_historical_data(count=window_size)
             
             if cache_data is None:
                 log("❌ Failed to get data from MT5", color='red')
